@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Water today</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F3F8FC">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ice:#F3F8FC;
+    --mist:#DCEBF5;
+    --lagoon:#2A7DE1;
+    --shallow:#6EC3F0;
+    --deep:#0F2E4A;
+    --foam:#FFFFFF;
+    --muted:#5B7A93;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ice);color:var(--deep);font-family:Figtree,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;display:flex;justify-content:center;padding:28px 18px 48px;
+    background:
+      radial-gradient(120% 60% at 50% -10%, #E4F2FB 0%, transparent 60%),
+      var(--ice);}
+  main{width:100%;max-width:420px}
+
+  header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.75rem;letter-spacing:-.02em}
+  .date{color:var(--muted);font-size:.9rem}
+
+  /* The glass — the one bold thing */
+  .glass-wrap{position:relative;display:flex;justify-content:center;margin:6px 0 22px}
+  svg.glass{width:min(78vw,300px);height:auto;overflow:visible}
+  .readout{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;padding-top:8%}
+  .big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(3.4rem,17vw,4.6rem);line-height:.9;letter-spacing:-.04em;
+    font-variant-numeric:tabular-nums;transition:color .4s}
+  .big small{font-size:.38em;font-weight:600;letter-spacing:0;margin-left:2px}
+  .sub{margin-top:8px;font-size:.98rem;font-weight:500;transition:color .4s}
+  .readout.on-water .big,.readout.on-water .sub{color:var(--foam)}
+  .tally{text-align:center;color:var(--muted);font-size:.92rem;margin-top:-6px;margin-bottom:26px}
+  .tally b{color:var(--deep);font-weight:600}
+
+  .wave{animation:drift 6s linear infinite}
+  .wave.back{animation-duration:9s;animation-direction:reverse}
+  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(-200px)}}
+  #water{transition:transform 1s cubic-bezier(.3,.9,.3,1)}
+
+  h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:1.05rem;margin-bottom:12px}
+  section{margin-bottom:26px}
+
+  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .chip{font:600 1.05rem "Bricolage Grotesque",sans-serif;color:var(--lagoon);background:var(--foam);
+    border:1.5px solid var(--mist);border-radius:999px;padding:12px 0;cursor:pointer;
+    transition:background .15s,border-color .15s,transform .1s;font-variant-numeric:tabular-nums}
+  .chip span{font-weight:400;font-size:.8em;color:var(--muted);margin-left:1px}
+  .chip:hover{border-color:var(--shallow);background:#F7FBFE}
+  .chip:active{transform:scale(.95);background:var(--mist)}
+
+  form.custom{display:flex;gap:10px}
+  .field{flex:1;position:relative}
+  .field input{width:100%;font:500 1.1rem Figtree,sans-serif;color:var(--deep);background:var(--foam);
+    border:1.5px solid var(--mist);border-radius:16px;padding:14px 48px 14px 16px;outline:none;transition:border-color .15s}
+  .field input:focus{border-color:var(--lagoon)}
+  .field .unit{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+  .add{font:600 1rem Figtree,sans-serif;color:var(--foam);background:var(--lagoon);border:0;border-radius:16px;padding:0 22px;cursor:pointer;transition:background .15s}
+  .add:hover{background:#1F6CC9}
+  .error{color:#C2410C;font-size:.85rem;margin-top:8px;min-height:1em}
+
+  .log{list-style:none;background:var(--foam);border-radius:18px;border:1.5px solid var(--mist);overflow:hidden}
+  .log li{display:flex;align-items:center;gap:12px;padding:12px 14px 12px 16px}
+  .log li+li{border-top:1px solid var(--mist)}
+  .log .amt{font:600 1.05rem "Bricolage Grotesque",sans-serif;min-width:68px;font-variant-numeric:tabular-nums}
+  .log .time{color:var(--muted);font-size:.9rem;flex:1}
+  .log button{background:none;border:0;color:var(--muted);font:500 .88rem Figtree,sans-serif;cursor:pointer;padding:6px 8px;border-radius:8px}
+  .log button:hover{color:var(--lagoon);background:var(--ice)}
+  .empty{color:var(--muted);font-size:.95rem;padding:16px;text-align:center;background:var(--foam);border:1.5px dashed var(--mist);border-radius:18px}
+  .reset{display:block;margin:14px auto 0;background:none;border:0;color:var(--muted);font:500 .9rem Figtree,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px}
+  .reset:hover{color:var(--deep)}
+
+  .confirm{display:none;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:.92rem}
+  .confirm.show{display:flex}
+  .confirm button{font:600 .9rem Figtree,sans-serif;border-radius:10px;padding:8px 14px;cursor:pointer;border:1.5px solid var(--mist);background:var(--foam);color:var(--deep)}
+  .confirm .yes{background:var(--deep);color:var(--foam);border-color:var(--deep)}
+
+  :focus-visible{outline:3px solid var(--shallow);outline-offset:2px}
+  .field input:focus-visible{outline:none}
+
+  @media (prefers-reduced-motion:reduce){
+    .wave{animation:none}
+    #water{transition:none}
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Water today</h1>
+    <span class="date" id="date"></span>
+  </header>
+
+  <div class="glass-wrap">
+    <svg class="glass" viewBox="0 0 200 260" aria-hidden="true">
+      <defs>
+        <clipPath id="cup">
+          <path d="M18 14 H182 L164 236 Q162 252 146 252 H54 Q38 252 36 236 Z"/>
+        </clipPath>
+        <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#6EC3F0"/>
+          <stop offset="1" stop-color="#2A7DE1"/>
+        </linearGradient>
+      </defs>
+      <path d="M18 14 H182 L164 236 Q162 252 146 252 H54 Q38 252 36 236 Z" fill="#FFFFFF"/>
+      <g clip-path="url(#cup)">
+        <g id="water" style="transform:translateY(260px)">
+          <path class="wave back" fill="#A9DCF5" d="M0 6 Q25 -2 50 6 T100 6 T150 6 T200 6 T250 6 T300 6 T350 6 T400 6 V400 H0 Z"/>
+          <path class="wave" fill="url(#wg)" d="M0 10 Q25 2 50 10 T100 10 T150 10 T200 10 T250 10 T300 10 T350 10 T400 10 V400 H0 Z"/>
+        </g>
+      </g>
+      <path d="M18 14 H182 L164 236 Q162 252 146 252 H54 Q38 252 36 236 Z" fill="none" stroke="#C9E0F0" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M34 40 L44 160" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+    <div class="readout" id="readout" aria-live="polite">
+      <div class="big" id="big">800<small>ml</small></div>
+      <div class="sub" id="sub">left to drink</div>
+    </div>
+  </div>
+  <p class="tally"><b id="drunk">0 ml</b> of 800 ml so far</p>
+
+  <section>
+    <h2>Quick add</h2>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section>
+    <h2>Custom amount</h2>
+    <form class="custom" id="form" novalidate>
+      <label class="field">
+        <span class="sr" style="position:absolute;left:-9999px">Amount in millilitres</span>
+        <input id="amount" type="number" inputmode="numeric" min="1" max="2000" placeholder="e.g. 220">
+        <span class="unit">ml</span>
+      </label>
+      <button class="add" type="submit">Add</button>
+    </form>
+    <p class="error" id="error" role="alert"></p>
+  </section>
+
+  <section>
+    <h2>Today's log</h2>
+    <div id="logWrap"></div>
+    <button class="reset" id="reset" type="button">Clear today</button>
+    <div class="confirm" id="confirm">
+      <span>Clear every entry for today?</span>
+      <button class="yes" id="yes" type="button">Clear</button>
+      <button id="no" type="button">Keep</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const GOAL = 800;
+const AMOUNTS = [5,10,15,25,30,50,100,150];
+const KEY = 'water-log-v1';
+const todayKey = () => new Date().toLocaleDateString('en-CA');
+
+let state = load();
+
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && s.day === todayKey()) return s;
+  }catch(e){}
+  return {day: todayKey(), entries: []};
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+function rollover(){
+  if (state.day !== todayKey()){ state = {day: todayKey(), entries: []}; save(); }
+}
+
+function add(ml){
+  rollover();
+  state.entries.unshift({ml, t: Date.now()});
+  save(); render();
+}
+
+function render(){
+  document.getElementById('date').textContent =
+    new Date().toLocaleDateString(undefined,{weekday:'short', day:'numeric', month:'short'});
+
+  const total = state.entries.reduce((a,e)=>a+e.ml,0);
+  const left = GOAL - total;
+  const pct = Math.min(total/GOAL,1);
+
+  const big = document.getElementById('big');
+  const sub = document.getElementById('sub');
+  if (left > 0){
+    big.innerHTML = left + '<small>ml</small>';
+    sub.textContent = 'left to drink';
+  } else if (left === 0){
+    big.innerHTML = '0<small>ml</small>';
+    sub.textContent = 'Goal reached for today';
+  } else {
+    big.innerHTML = '+' + (-left) + '<small>ml</small>';
+    sub.textContent = 'over your 800 ml limit';
+  }
+  document.getElementById('drunk').textContent = total + ' ml';
+
+  // water surface: top of cup at y=14, bottom at y=252
+  const y = 252 - pct*(252-14) - 8;
+  document.getElementById('water').style.transform = `translateY(${total===0?260:y}px)`;
+  document.getElementById('readout').classList.toggle('on-water', pct >= .55);
+
+  const wrap = document.getElementById('logWrap');
+  if (!state.entries.length){
+    wrap.innerHTML = '<p class="empty">Nothing logged yet. Tap an amount above after each drink.</p>';
+  } else {
+    wrap.innerHTML = '<ul class="log">' + state.entries.map((e,i)=>`
+      <li><span class="amt">${e.ml} ml</span>
+      <span class="time">${new Date(e.t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}</span>
+      <button type="button" data-i="${i}" aria-label="Remove ${e.ml} ml entry">Remove</button></li>`).join('') + '</ul>';
+  }
+  document.getElementById('reset').style.display = state.entries.length ? 'block' : 'none';
+}
+
+const chips = document.getElementById('chips');
+chips.innerHTML = AMOUNTS.map(a=>`<button class="chip" type="button" data-ml="${a}">+${a}<span>ml</span></button>`).join('');
+chips.addEventListener('click', e=>{
+  const b = e.target.closest('.chip'); if (b) add(+b.dataset.ml);
+});
+
+document.getElementById('form').addEventListener('submit', e=>{
+  e.preventDefault();
+  const inp = document.getElementById('amount');
+  const err = document.getElementById('error');
+  const v = Math.round(Number(inp.value));
+  if (!inp.value || !v || v < 1){ err.textContent = 'Enter an amount in ml, like 200.'; inp.focus(); return; }
+  if (v > 2000){ err.textContent = 'That’s more than 2 litres in one go. Enter up to 2000 ml.'; inp.focus(); return; }
+  err.textContent = ''; inp.value = ''; add(v);
+});
+
+document.getElementById('logWrap').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-i]'); if (!b) return;
+  state.entries.splice(+b.dataset.i,1); save(); render();
+});
+
+const confirmBox = document.getElementById('confirm');
+document.getElementById('reset').onclick = ()=> confirmBox.classList.add('show');
+document.getElementById('no').onclick = ()=> confirmBox.classList.remove('show');
+document.getElementById('yes').onclick = ()=>{
+  state.entries = []; save(); confirmBox.classList.remove('show'); render();
+};
+
+setInterval(()=>{ if (state.day !== todayKey()){ rollover(); render(); } }, 60000);
+render();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
